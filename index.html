@@ -1,0 +1,1116 @@
+```html
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>早押しクイズ</title>
+
+<style>
+*{
+  box-sizing:border-box;
+}
+
+body{
+  margin:0;
+  font-family:"Noto Sans JP",sans-serif;
+  background:
+    radial-gradient(circle at top,#26345d 0%,#101426 45%,#070912 100%);
+  color:white;
+  min-height:100vh;
+}
+
+button,input{
+  font:inherit;
+}
+
+.screen{
+  display:none;
+  min-height:100vh;
+  padding:30px 18px;
+}
+
+.screen.active{
+  display:flex;
+  justify-content:center;
+  align-items:center;
+}
+
+.card{
+  width:min(900px,100%);
+  background:rgba(20,25,45,.92);
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:24px;
+  padding:30px;
+  box-shadow:0 20px 60px rgba(0,0,0,.45);
+}
+
+h1{
+  text-align:center;
+  font-size:clamp(30px,6vw,52px);
+  margin:0 0 10px;
+}
+
+.subtitle{
+  text-align:center;
+  color:#aeb8d8;
+  margin-bottom:30px;
+}
+
+.section{
+  margin:22px 0;
+}
+
+.section-title{
+  font-size:18px;
+  font-weight:bold;
+  margin-bottom:12px;
+}
+
+.options{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+}
+
+.option{
+  border:1px solid #465174;
+  background:#171d34;
+  color:white;
+  padding:12px 18px;
+  border-radius:12px;
+  cursor:pointer;
+  transition:.15s;
+}
+
+.option:hover{
+  transform:translateY(-2px);
+  background:#222b49;
+}
+
+.option.selected{
+  background:#4c63d8;
+  border-color:#8192ff;
+  box-shadow:0 0 18px rgba(76,99,216,.4);
+}
+
+.main-button{
+  width:100%;
+  border:0;
+  border-radius:16px;
+  padding:17px;
+  margin-top:18px;
+  background:linear-gradient(135deg,#667eea,#764ba2);
+  color:white;
+  font-size:20px;
+  font-weight:bold;
+  cursor:pointer;
+}
+
+.main-button:hover{
+  filter:brightness(1.12);
+}
+
+.small-note{
+  color:#8994b7;
+  font-size:13px;
+  margin-top:8px;
+}
+
+#gameScreen{
+  align-items:stretch;
+}
+
+.game{
+  width:min(1000px,100%);
+  margin:auto;
+}
+
+.topbar{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+  margin-bottom:18px;
+}
+
+.badge{
+  background:rgba(255,255,255,.08);
+  border:1px solid rgba(255,255,255,.1);
+  padding:8px 13px;
+  border-radius:999px;
+  font-size:14px;
+}
+
+#questionArea{
+  min-height:300px;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  text-align:center;
+  background:rgba(10,14,28,.8);
+  border-radius:22px;
+  padding:30px;
+  border:1px solid rgba(255,255,255,.1);
+}
+
+#questionText{
+  font-size:clamp(22px,4vw,38px);
+  line-height:1.8;
+  letter-spacing:.04em;
+}
+
+.hidden-question{
+  color:#73809f;
+  font-size:20px;
+}
+
+#buzzer{
+  width:100%;
+  height:150px;
+  margin-top:20px;
+  border:0;
+  border-radius:24px;
+  background:linear-gradient(145deg,#ff416c,#ff1744);
+  color:white;
+  font-size:42px;
+  font-weight:900;
+  cursor:pointer;
+  box-shadow:0 12px 35px rgba(255,23,68,.3);
+}
+
+#buzzer:active{
+  transform:scale(.98);
+}
+
+#buzzer.disabled{
+  opacity:.45;
+  cursor:not-allowed;
+}
+
+#answerArea{
+  display:none;
+  margin-top:20px;
+  gap:10px;
+}
+
+#answerArea.show{
+  display:flex;
+}
+
+#answerInput{
+  flex:1;
+  min-width:0;
+  padding:15px;
+  border-radius:12px;
+  border:1px solid #465174;
+  background:#0e1324;
+  color:white;
+  outline:none;
+}
+
+#answerButton{
+  padding:15px 22px;
+  border:0;
+  border-radius:12px;
+  background:#4c63d8;
+  color:white;
+  cursor:pointer;
+}
+
+#result{
+  text-align:center;
+  margin-top:18px;
+  min-height:35px;
+  font-size:22px;
+  font-weight:bold;
+}
+
+.correct{
+  color:#6fffa0;
+}
+
+.wrong{
+  color:#ff7b91;
+}
+
+#nextButton{
+  display:none;
+}
+
+#nextButton.show{
+  display:block;
+}
+
+#resultScreen .card{
+  text-align:center;
+}
+
+.big-score{
+  font-size:60px;
+  font-weight:900;
+  margin:20px 0;
+}
+
+.stat{
+  color:#b8c0d9;
+  margin:8px;
+}
+
+.toggle-row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  background:#171d34;
+  padding:14px 16px;
+  border-radius:12px;
+}
+
+.toggle{
+  width:52px;
+  height:30px;
+  border-radius:30px;
+  background:#3a425d;
+  cursor:pointer;
+  position:relative;
+}
+
+.toggle::after{
+  content:"";
+  position:absolute;
+  width:24px;
+  height:24px;
+  top:3px;
+  left:3px;
+  border-radius:50%;
+  background:white;
+  transition:.2s;
+}
+
+.toggle.on{
+  background:#4c63d8;
+}
+
+.toggle.on::after{
+  left:25px;
+}
+
+@media(max-width:600px){
+  .card{
+    padding:20px;
+    border-radius:18px;
+  }
+
+  #buzzer{
+    height:125px;
+    font-size:34px;
+  }
+
+  #questionArea{
+    min-height:280px;
+  }
+
+  #answerArea{
+    flex-direction:column;
+  }
+
+  #answerButton{
+    width:100%;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<!-- 設定画面 -->
+<section id="menuScreen" class="screen active">
+  <div class="card">
+
+    <h1>⚡ 早押しクイズ</h1>
+    <div class="subtitle">問題を最後まで聞く前に答えを見抜け！</div>
+
+    <div class="section">
+      <div class="section-title">難易度</div>
+      <div class="options" id="levelOptions">
+        <button class="option selected" data-level="初級">初級</button>
+        <button class="option" data-level="中級">中級</button>
+        <button class="option" data-level="上級">上級</button>
+        <button class="option" data-level="ランダム">ランダム</button>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">問題数</div>
+      <div class="options" id="countOptions">
+        <button class="option" data-count="5">5問</button>
+        <button class="option selected" data-count="10">10問</button>
+        <button class="option" data-count="20">20問</button>
+        <button class="option" data-count="30">30問</button>
+        <button class="option" data-count="50">50問</button>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">ジャンル（複数選択OK）</div>
+      <div class="options" id="genreOptions">
+
+        <button class="option selected" data-genre="科学">科学</button>
+        <button class="option" data-genre="社会">社会</button>
+        <button class="option" data-genre="国語">国語</button>
+        <button class="option" data-genre="英語">英語</button>
+        <button class="option" data-genre="文化・雑学">文化・雑学</button>
+
+      </div>
+
+      <div class="small-note">
+        科学には物理・化学・生物・地学・数学を含みます。
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="toggle-row">
+        <span>問題文を画面に表示する</span>
+        <div id="displayToggle" class="toggle on"></div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="toggle-row">
+        <span>音声読み上げ</span>
+        <div id="voiceToggle" class="toggle on"></div>
+      </div>
+    </div>
+
+    <button id="startButton" class="main-button">
+      作戦開始
+    </button>
+
+  </div>
+</section>
+
+
+<!-- ゲーム画面 -->
+<section id="gameScreen" class="screen">
+  <div class="game">
+
+    <div class="topbar">
+      <div class="badge" id="progress">1 / 10</div>
+      <div class="badge" id="genreLabel">科学</div>
+      <div class="badge" id="scoreLabel">0点</div>
+    </div>
+
+    <div id="questionArea">
+      <div id="questionText"></div>
+    </div>
+
+    <button id="buzzer">⚡ BUZZ!</button>
+
+    <div id="answerArea">
+      <input
+        id="answerInput"
+        type="text"
+        placeholder="答えをひらがなで入力"
+        autocomplete="off"
+      >
+      <button id="answerButton">回答する</button>
+    </div>
+
+    <div id="result"></div>
+
+    <button id="nextButton" class="main-button">
+      次の問題
+    </button>
+
+  </div>
+</section>
+
+
+<!-- 結果画面 -->
+<section id="resultScreen" class="screen">
+  <div class="card">
+
+    <h1>結果</h1>
+
+    <div class="big-score" id="finalScore">0点</div>
+
+    <div class="stat" id="finalCorrect">正解 0 / 0</div>
+    <div class="stat" id="finalBuzz">早押し正解率 0%</div>
+
+    <div id="reviewArea" style="margin-top:25px;text-align:left;"></div>
+
+    <button id="retryButton" class="main-button">
+      もう一度
+    </button>
+
+    <button id="backButton" class="main-button"
+      style="background:#303951;">
+      設定に戻る
+    </button>
+
+  </div>
+</section>
+
+
+<script src="question.js"></script>
+
+<script>
+"use strict";
+
+/* =========================
+   ゲーム設定
+========================= */
+
+let selectedLevel = "初級";
+let selectedGenres = ["科学"];
+let questionCount = 10;
+let reviewData = [];
+
+let showQuestion = true;
+let useVoice = true;
+
+let gameQuestions = [];
+let currentIndex = 0;
+let score = 0;
+let correctCount = 0;
+let buzzCount = 0;
+
+let currentQuestion = null;
+let buzzed = false;
+let answered = false;
+
+let speechTimer = null;
+let revealTimer = null;
+
+
+/* =========================
+   画面
+========================= */
+
+const menuScreen = document.getElementById("menuScreen");
+const gameScreen = document.getElementById("gameScreen");
+const resultScreen = document.getElementById("resultScreen");
+
+function showScreen(screen){
+  menuScreen.classList.remove("active");
+  gameScreen.classList.remove("active");
+  resultScreen.classList.remove("active");
+
+  screen.classList.add("active");
+}
+
+
+/* =========================
+   難易度
+========================= */
+
+document.querySelectorAll("#levelOptions .option")
+.forEach(button => {
+
+  button.addEventListener("click", () => {
+
+    document
+      .querySelectorAll("#levelOptions .option")
+      .forEach(b => b.classList.remove("selected"));
+
+    button.classList.add("selected");
+
+    selectedLevel = button.dataset.level;
+  });
+
+});
+
+
+/* =========================
+   問題数
+========================= */
+
+document.querySelectorAll("#countOptions .option")
+.forEach(button => {
+  button.addEventListener("click", () => {
+    document
+      .querySelectorAll("#countOptions .option")
+      .forEach(b => b.classList.remove("selected"));
+
+    button.classList.add("selected");
+    questionCount = Number(button.dataset.count);
+  });
+});
+
+
+/* =========================
+   ジャンル
+========================= */
+
+document.querySelectorAll("#genreOptions .option")
+.forEach(button => {
+
+  button.addEventListener("click", () => {
+
+    const genre = button.dataset.genre;
+
+    if(selectedGenres.includes(genre)){
+
+      if(selectedGenres.length === 1){
+        return;
+      }
+
+      selectedGenres =
+        selectedGenres.filter(g => g !== genre);
+
+      button.classList.remove("selected");
+
+    }else{
+
+      selectedGenres.push(genre);
+      button.classList.add("selected");
+
+    }
+
+  });
+
+});
+
+
+/* =========================
+   トグル
+========================= */
+
+const displayToggle =
+  document.getElementById("displayToggle");
+
+displayToggle.addEventListener("click", () => {
+
+  showQuestion = !showQuestion;
+
+  displayToggle.classList.toggle(
+    "on",
+    showQuestion
+  );
+
+});
+
+
+const voiceToggle =
+  document.getElementById("voiceToggle");
+
+voiceToggle.addEventListener("click", () => {
+
+  useVoice = !useVoice;
+
+  voiceToggle.classList.toggle(
+    "on",
+    useVoice
+  );
+
+  if(!useVoice){
+    speechSynthesis.cancel();
+  }
+
+});
+
+
+/* =========================
+   問題を選ぶ
+========================= */
+
+function shuffle(array){
+
+  const a = [...array];
+
+  for(let i=a.length-1;i>0;i--){
+
+    const j =
+      Math.floor(Math.random() * (i+1));
+
+    [a[i],a[j]] =
+      [a[j],a[i]];
+  }
+
+  return a;
+}
+
+
+function createQuestionSet(){
+
+  let pool =
+    questions.filter(q =>
+      selectedGenres.includes(q.category)
+    );
+
+  if(selectedLevel !== "ランダム"){
+
+    pool =
+      pool.filter(q =>
+        q.level === selectedLevel
+      );
+  }
+
+  if(pool.length === 0){
+    alert("この条件の問題がありません。");
+    return [];
+  }
+
+  return shuffle(pool)
+    .slice(0, Math.min(questionCount,pool.length));
+}
+
+
+/* =========================
+   ゲーム開始
+========================= */
+
+document
+  .getElementById("startButton")
+  .addEventListener("click", startGame);
+
+
+function startGame(){
+
+  gameQuestions =
+    createQuestionSet();
+
+  if(gameQuestions.length === 0){
+    return;
+  }
+
+  currentIndex = 0;
+  score = 0;
+  correctCount = 0;
+  buzzCount = 0;
+  reviewData = [];
+
+  showScreen(gameScreen);
+
+  loadQuestion();
+}
+
+
+/* =========================
+   問題表示
+========================= */
+
+function loadQuestion(){
+
+  clearTimers();
+
+  speechSynthesis.cancel();
+
+  currentQuestion =
+    gameQuestions[currentIndex];
+
+  buzzed = false;
+  answered = false;
+
+  document.getElementById("progress").textContent =
+    `${currentIndex + 1} / ${gameQuestions.length}`;
+
+  document.getElementById("genreLabel").textContent =
+    `${currentQuestion.category} / ${currentQuestion.genre}`;
+
+  document.getElementById("scoreLabel").textContent =
+    `${score}点`;
+
+  const questionText =
+    document.getElementById("questionText");
+
+  if(showQuestion){
+
+    questionText.className = "";
+    questionText.textContent = "";
+
+    startReveal(currentQuestion.question);
+
+  }else{
+
+    questionText.className =
+      "hidden-question";
+
+    questionText.textContent =
+      "🔊 音声を聞いてください";
+
+  }
+
+  document.getElementById("answerArea")
+    .classList.remove("show");
+
+  document.getElementById("answerInput").value = "";
+
+  document.getElementById("result").textContent = "";
+
+  document.getElementById("result").className = "";
+
+  const next =
+    document.getElementById("nextButton");
+
+  next.classList.remove("show");
+
+  const buzzer =
+    document.getElementById("buzzer");
+
+  buzzer.classList.remove("disabled");
+  buzzer.disabled = false;
+
+  /* 音声 */
+  if(useVoice){
+
+    speechTimer = setTimeout(() => {
+
+      speakQuestion(currentQuestion.question);
+
+    },150);
+
+  }
+}
+
+
+/* =========================
+   問題文を少しずつ表示
+========================= */
+
+function startReveal(text){
+
+  const area =
+    document.getElementById("questionText");
+
+  let i = 0;
+
+  revealTimer =
+    setInterval(() => {
+
+      if(buzzed){
+        clearInterval(revealTimer);
+        return;
+      }
+
+      i++;
+
+      area.textContent =
+        text.slice(0,i);
+
+      if(i >= text.length){
+
+        clearInterval(revealTimer);
+      }
+
+    },95);
+}
+
+
+/* =========================
+   音声
+========================= */
+
+function speakQuestion(text){
+
+  if(!useVoice){
+    return;
+  }
+
+  speechSynthesis.cancel();
+
+  const utterance =
+    new SpeechSynthesisUtterance(text);
+
+  utterance.lang = "ja-JP";
+  utterance.rate = 1.0;
+  utterance.pitch = 1.0;
+  utterance.volume = 1.0;
+
+  speechSynthesis.speak(utterance);
+}
+
+
+/* =========================
+   早押し
+========================= */
+
+document
+  .getElementById("buzzer")
+  .addEventListener("click", pressBuzzer);
+
+
+function pressBuzzer(){
+
+  if(buzzed || answered){
+    return;
+  }
+
+  buzzed = true;
+  buzzCount++;
+
+  clearInterval(revealTimer);
+  clearTimeout(speechTimer);
+
+  speechSynthesis.cancel();
+
+  const buzzer =
+    document.getElementById("buzzer");
+
+  buzzer.classList.add("disabled");
+  buzzer.disabled = true;
+
+  // 音声だけモードでは問題文を全文表示しない
+  if(showQuestion){
+    // BUZZした時点まで表示されていた文章をそのまま残す
+  }else{
+    document.getElementById("questionText").textContent =
+      "🔊 音声を聞いてください";
+  }
+
+  document.getElementById("answerArea")
+    .classList.add("show");
+
+  document.getElementById("answerInput")
+    .focus();
+
+}
+
+
+/* =========================
+   回答
+========================= */
+
+document
+  .getElementById("answerButton")
+  .addEventListener("click", submitAnswer);
+
+
+document
+  .getElementById("answerInput")
+  .addEventListener("keydown", e => {
+
+    if(e.key === "Enter"){
+      submitAnswer();
+    }
+
+  });
+
+
+function normalizeAnswer(text){
+
+  return text
+    .trim()
+    .toLowerCase()
+    .replace(/\s/g,"")
+    .replace(/[ァ-ヶ]/g,
+      ch => String.fromCharCode(ch.charCodeAt(0)-0x60)
+    );
+}
+
+
+function submitAnswer(){
+
+  if(answered){
+    return;
+  }
+
+  answered = true;
+
+  const input =
+    document.getElementById("answerInput");
+
+  const userAnswer =
+    normalizeAnswer(input.value);
+
+  const correctAnswer =
+    normalizeAnswer(currentQuestion.answer);
+
+  const result =
+    document.getElementById("result");
+
+  const isCorrect = userAnswer === correctAnswer;
+
+  if(isCorrect){
+
+    correctCount++;
+
+    score += currentQuestion.level === "上級"
+      ? 30
+      : currentQuestion.level === "中級"
+        ? 20
+        : 10;
+
+    result.textContent =
+      `⭕ 正解！　答え：${currentQuestion.answer}`;
+
+    result.className = "correct";
+
+  }else{
+
+    result.textContent =
+      `❌ 不正解　正解：${currentQuestion.answer}`;
+
+    result.className = "wrong";
+
+  }
+
+  reviewData.push({
+    question: currentQuestion.question,
+    userAnswer: input.value.trim() || "（未入力）",
+    correctAnswer: currentQuestion.answer,
+    isCorrect: isCorrect
+  });
+
+  document.getElementById("scoreLabel").textContent =
+    `${score}点`;
+
+  document.getElementById("answerButton").disabled =
+    true;
+
+  document.getElementById("nextButton")
+    .classList.add("show");
+
+}
+
+
+/* =========================
+   次の問題
+========================= */
+
+document
+  .getElementById("nextButton")
+  .addEventListener("click", nextQuestion);
+
+
+function nextQuestion(){
+
+  currentIndex++;
+
+  if(currentIndex >= gameQuestions.length){
+
+    finishGame();
+
+  }else{
+
+    loadQuestion();
+
+  }
+}
+
+
+/* =========================
+   終了
+========================= */
+
+function finishGame(){
+
+  clearTimers();
+
+  speechSynthesis.cancel();
+
+  showScreen(resultScreen);
+
+  document.getElementById("finalScore")
+    .textContent =
+      `${score}点`;
+
+  document.getElementById("finalCorrect")
+    .textContent =
+      `正解 ${correctCount} / ${gameQuestions.length}`;
+
+  const average =
+    buzzCount === 0
+      ? 0
+      : Math.round(
+          (correctCount / buzzCount) * 100
+        );
+
+  document.getElementById("finalBuzz")
+    .textContent =
+      `早押し正解率 ${average}%`;
+
+  const reviewArea = document.getElementById("reviewArea");
+
+  if(reviewData.length === 0){
+    reviewArea.innerHTML = "";
+    return;
+  }
+
+  reviewArea.innerHTML = `
+    <h2 style="margin-bottom:15px;">📖 復習</h2>
+    ${reviewData.map((item, i) => `
+      <div style="
+        background:#171d34;
+        border:1px solid rgba(255,255,255,.1);
+        border-radius:14px;
+        padding:15px;
+        margin-bottom:12px;
+      ">
+        <div style="font-weight:bold;margin-bottom:8px;">
+          ${i + 1}. ${item.question}
+        </div>
+        <div style="color:${item.isCorrect ? "#6fffa0" : "#ff7b91"};">
+          あなたの答え：${item.userAnswer}
+        </div>
+        <div style="margin-top:5px;">
+          正解：${item.correctAnswer}
+        </div>
+      </div>
+    `).join("")}
+  `;
+}
+
+
+/* =========================
+   再挑戦
+========================= */
+
+document
+  .getElementById("retryButton")
+  .addEventListener("click", startGame);
+
+
+document
+  .getElementById("backButton")
+  .addEventListener("click", () => {
+
+    speechSynthesis.cancel();
+
+    showScreen(menuScreen);
+
+  });
+
+
+/* =========================
+   Spaceキー
+========================= */
+
+document.addEventListener("keydown", e => {
+
+  if(e.code !== "Space"){
+    return;
+  }
+
+  const tag =
+    document.activeElement.tagName;
+
+  if(tag === "INPUT" ||
+     tag === "TEXTAREA"){
+    return;
+  }
+
+  e.preventDefault();
+
+  if(gameScreen.classList.contains("active")){
+    pressBuzzer();
+  }
+
+});
+
+
+/* =========================
+   タイマー整理
+========================= */
+
+function clearTimers(){
+
+  clearInterval(revealTimer);
+  clearTimeout(speechTimer);
+
+}
+</script>
+
+</body>
+</html>
+```
